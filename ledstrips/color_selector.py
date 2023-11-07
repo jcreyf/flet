@@ -78,12 +78,29 @@ class LedStrip():
     def __init__(self, name: str, endpoint: str):
         self._Name=name
         self._API_endpoint=endpoint
-        self.getMetadata()
+        asyncio.run(self.getMetadata_async())
 
     def __str__(self) -> str:
         return f"Name: {self._Name} (led_count:{self._LedCount}, status:{self._Status})"
 
     def getMetadata(self):
+        # Get the status of the ledstrip:
+        try:
+            req=urllib.request.urlopen(self._API_endpoint)
+            res=req.read()
+            contents = json.loads(res.decode("utf-8"))
+            print(str(contents))
+            self._Status=contents["light"]["state"]
+            self._LedCount=contents["light"]["led-count"]
+            self._BrightnessValue=contents["light"]["brightness"]
+            self._RedValue=contents["light"]["color"]["red"]
+            self._GreenValue=contents["light"]["color"]["green"]
+            self._BlueValue=contents["light"]["color"]["blue"]
+            self._WhiteValue=contents["light"]["color"]["white"]
+        except Exception as e:
+            print(str(e))
+
+    async def getMetadata_async(self):
         # Get the status of the ledstrip:
         try:
             req=urllib.request.urlopen(self._API_endpoint)
