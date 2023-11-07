@@ -1,3 +1,5 @@
+import urllib.request
+import json
 import flet
 from flet import (
     Column,
@@ -13,7 +15,9 @@ from flet import (
 # https://github.com/flet-dev/flet-contrib/blob/main/flet_contrib/color_picker/README.md
 # https://github.com/flet-dev/flet-contrib/blob/main/flet_contrib/color_picker/src/color_picker.py
 from flet_contrib.color_picker import ColorPicker
+from typing import List
 
+#---------------------------
 
 class ColorSelectorApp(UserControl):
     def build(self):
@@ -56,5 +60,108 @@ def main(page: Page):
     colorSelector=ColorSelectorApp()
     page.add(colorSelector)
 
+#flet.app(target=main)
 
-flet.app(target=main)
+#---------------------------
+
+class LedStrip():
+    _Name: str = ""
+    _API_endpoint: str = ""
+    _Status: bool = False
+    _LedCount: int = 0
+    _RedValue: int = 0
+    _GreenValue: int = 0
+    _BlueValue: int = 0
+    _WhiteValue: int = 0
+    _BrightnessValue: int = 1
+    def __init__(self, name: str, endpoint: str):
+        self._Name=name
+        self._API_endpoint=endpoint
+        self.getMetadata()
+
+    def __str__(self) -> str:
+        return f"Name: {self._Name} (led_count:{self._LedCount}, status:{self._Status})"
+
+    def getMetadata(self):
+        # Get the status of the ledstrip:
+        try:
+            req=urllib.request.urlopen(self._API_endpoint)
+            res=req.read()
+            contents = json.loads(res.decode("utf-8"))
+            print(str(contents))
+            self._Status=contents["light"]["state"]
+            self._LedCount=contents["light"]["led-count"]
+            self._BrightnessValue=contents["light"]["brightness"]
+            self._RedValue=contents["light"]["color"]["red"]
+            self._GreenValue=contents["light"]["color"]["green"]
+            self._BlueValue=contents["light"]["color"]["blue"]
+            self._WhiteValue=contents["light"]["color"]["white"]
+        except Exception as e:
+            print(str(e))
+
+    def _sendData(self, toggle: bool):
+        _behavior = "Default"   # "Default" or "Christmass"
+        try:
+            data={"action": "update",
+                "toggle": toggle,
+                "behavior": _behavior,
+                "led-count": self._LedCount,
+                "brightness": self._BrightnessValue,
+                "color": {
+                    "red": self._RedValue,
+                    "green": self._GreenValue,
+                    "blue": self._BlueValue,
+                    "white": self._WhiteValue
+                }
+            }
+            data=json.dumps(data)
+            data=data.encode('utf-8')
+            req=urllib.request.Request(self._API_endpoint, data=data)
+            req.add_header("Content-Type", "application/json")
+            contents = urllib.request.urlopen(req).read()
+            print(str(contents))
+        except Exception as e:
+            print(str(e))
+
+    def turnOn(self):
+        pass
+
+    def turnOff(self):
+        pass
+
+    def toggle(self):
+        self._sendData(toggle=True)
+
+    def setColor(self, red: int = 0, green: int = 0, blue: int = 0):
+        self._RedValue = red
+        self._GreenValue = green
+        self._BlueValue = blue
+        self._sendData(toggle=False)
+
+    def setBrightness(self, value: int):
+        self._BrightnessValue = value
+        self._sendData(toggle=False)
+
+
+#---------------------------
+
+class App():
+    def __init__(self):
+        self._ledstrips: List[LedStrip] = list()
+
+    def addStrip(self):
+#        self._ledstrips.append(LedStrip(name="Luna", endpoint="http://192.168.5.12:8888/light/Luna"))
+#        self._ledstrips.append(LedStrip(name="Bedroom", endpoint="http://192.168.5.10:8888/light/Bedroom"))
+        self._ledstrips.append(LedStrip(name="Loft", endpoint="http://192.168.5.11:8888/light/Loft"))
+
+    def list(self):
+        for strip in self._ledstrips:
+            print(strip)
+
+#---------------------------
+
+
+if __name__ == '__main__':
+    app = App()
+    app.addStrip()
+    app.list()
