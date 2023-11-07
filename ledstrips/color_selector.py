@@ -1,4 +1,5 @@
 import urllib.request
+import asyncio
 import json
 import flet
 from flet import (
@@ -122,12 +123,6 @@ class LedStrip():
             print(str(contents))
         except Exception as e:
             print(str(e))
-
-    def turnOn(self):
-        pass
-
-    def turnOff(self):
-        pass
 
     def toggle(self):
         self._sendData(toggle=True)
