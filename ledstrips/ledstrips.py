@@ -40,6 +40,7 @@ class App():
         page.window_width=400
         page.window_height=440
         ledstripsGUI=LedstripsGUI()
+        ledstripsGUI.setLedstrip(self._ledstrips[0])
         page.add(ledstripsGUI)
 
 
@@ -118,16 +119,39 @@ class LedStrip():
         self._BrightnessValue = value
         self._sendData(toggle=False)
 
+    def getColorHEX(self):
+        return "#{:02x}{:02x}{:02x}".format(self._RedValue, 
+                                            self._GreenValue, 
+                                            self._BlueValue)
+
+    def setColorHEX(self, hex: str):
+        rgb = []
+        for i in (0, 2, 4):
+            decimal = int(hex[i:i+2], 16)
+            rgb.append(decimal)
+        self.setColor(red=rgb[0], green=rgb[1], blue=rgb[2])
+
 
 #---------------------------
 
 
 class LedstripsGUI(UserControl):
-    def build(self):
-        self.result = Text(value="0", color=colors.WHITE, size=20)
+    def setLedstrip(self, ledstrip: LedStrip):
+        self._ledstrip=ledstrip
 
-        # application's root control (i.e. "view") containing all other controls
-        return Container(
+    def build(self):
+        ledstripContainer = LedstripContainer(self._ledstrip)
+        return ledstripContainer
+
+
+#---------------------------
+
+
+class LedstripContainer(Container):
+    def __init__(self, ledstrip: LedStrip):
+        self._ledstrip = ledstrip
+        self.result = Text(value=self._ledstrip.getColorHEX(), color=colors.WHITE, size=20)
+        super().__init__(
             width=400,
             bgcolor=colors.BLACK,
             border_radius=border_radius.all(10),
@@ -137,16 +161,17 @@ class LedstripsGUI(UserControl):
                     Row(controls=[self.result], alignment="end"),
                     Row(controls=[self.ColorPickerWidget()],),
                 ],
-            ),
+            )
         )
 
-
     def ColorPickerWidget(self):
-        color_picker = ColorPicker(color="#c8df6f")
+        color_picker = ColorPicker(color=self._ledstrip.getColorHEX())
 
         def select_color(e):
             self.result.value=color_picker.color
             self.result.update()
+            # Remove the pound sign ("#") from the color and feed it to the ledstrip:
+            self._ledstrip.setColorHEX(color_picker.color[1:])
 
         return flet.Column(
             [
