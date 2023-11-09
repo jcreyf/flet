@@ -18,52 +18,33 @@ from flet import (
 from flet_contrib.color_picker import ColorPicker
 from typing import List
 
-#---------------------------
-
-class ColorSelectorApp(UserControl):
-    def build(self):
-        self.result = Text(value="0", color=colors.WHITE, size=20)
-
-        # application's root control (i.e. "view") containing all other controls
-        return Container(
-            width=400,
-            bgcolor=colors.BLACK,
-            border_radius=border_radius.all(10),
-            padding=20,
-            content=Column(
-                controls=[
-                    Row(controls=[self.result], alignment="end"),
-                    Row(controls=[self.ColorPickerWidget()],),
-                ],
-            ),
-        )
-
-
-    def ColorPickerWidget(self):
-        color_picker = ColorPicker(color="#c8df6f")
-
-        def select_color(e):
-            self.result.value=color_picker.color
-            self.result.update()
-
-        return flet.Column(
-            [
-                color_picker,
-                flet.FilledButton("Select", on_click=select_color),
-            ]
-        )
-
-
-def main(page: Page):
-    page.title="Color Selector App"
-    page.window_width=400
-    page.window_height=440
-    colorSelector=ColorSelectorApp()
-    page.add(colorSelector)
-
-#flet.app(target=main)
 
 #---------------------------
+
+
+class App():
+    def __init__(self):
+        self._ledstrips: List[LedStrip] = list()
+
+    def addStrip(self):
+#        self._ledstrips.append(LedStrip(name="Luna", endpoint="http://192.168.5.12:8888/light/Luna"))
+#        self._ledstrips.append(LedStrip(name="Bedroom", endpoint="http://192.168.5.10:8888/light/Bedroom"))
+        self._ledstrips.append(LedStrip(name="Loft", endpoint="http://192.168.5.11:8888/light/Loft"))
+
+    def list(self):
+        for strip in self._ledstrips:
+            print(strip)
+
+    def GUI(self, page: Page):
+        page.title="Ledstrips"
+        page.window_width=400
+        page.window_height=440
+        ledstripsGUI=LedstripsGUI()
+        page.add(ledstripsGUI)
+
+
+#---------------------------
+
 
 class LedStrip():
     _Name: str = ""
@@ -140,18 +121,40 @@ class LedStrip():
 
 #---------------------------
 
-class App():
-    def __init__(self):
-        self._ledstrips: List[LedStrip] = list()
 
-    def addStrip(self):
-#        self._ledstrips.append(LedStrip(name="Luna", endpoint="http://192.168.5.12:8888/light/Luna"))
-#        self._ledstrips.append(LedStrip(name="Bedroom", endpoint="http://192.168.5.10:8888/light/Bedroom"))
-        self._ledstrips.append(LedStrip(name="Loft", endpoint="http://192.168.5.11:8888/light/Loft"))
+class LedstripsGUI(UserControl):
+    def build(self):
+        self.result = Text(value="0", color=colors.WHITE, size=20)
 
-    def list(self):
-        for strip in self._ledstrips:
-            print(strip)
+        # application's root control (i.e. "view") containing all other controls
+        return Container(
+            width=400,
+            bgcolor=colors.BLACK,
+            border_radius=border_radius.all(10),
+            padding=20,
+            content=Column(
+                controls=[
+                    Row(controls=[self.result], alignment="end"),
+                    Row(controls=[self.ColorPickerWidget()],),
+                ],
+            ),
+        )
+
+
+    def ColorPickerWidget(self):
+        color_picker = ColorPicker(color="#c8df6f")
+
+        def select_color(e):
+            self.result.value=color_picker.color
+            self.result.update()
+
+        return flet.Column(
+            [
+                color_picker,
+                flet.FilledButton("Select", on_click=select_color),
+            ]
+        )
+
 
 #---------------------------
 
@@ -160,3 +163,4 @@ if __name__ == '__main__':
     app = App()
     app.addStrip()
     app.list()
+    flet.app(target=app.GUI)
