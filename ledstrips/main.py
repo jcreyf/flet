@@ -37,9 +37,14 @@ class App():
 
     def GUI(self, page: Page):
         page.title="Ledstrips"
-        page.window_width=400
-        page.window_height=440
+        page.window_width=450
+        page.window_height=600
+        page.scroll="auto"
+        page.fonts = {
+            "Roboto Mono": "RobotoMono-VariableFont_wght.ttf",
+        }
         ledstripsGUI=LedstripsGUI()
+        ledstripsGUI.setPage(page)  # Needed for the Markdown control to open hyperlinks
         ledstripsGUI.setLedstrip(self._ledstrips[0])
         page.add(ledstripsGUI)
 
@@ -57,6 +62,7 @@ class LedStrip():
     _BlueValue: int = 0
     _WhiteValue: int = 0
     _BrightnessValue: int = 1
+    _MetaData = None
     def __init__(self, name: str, endpoint: str):
         self._Name=name
         self._API_endpoint=endpoint
@@ -70,15 +76,15 @@ class LedStrip():
         try:
             req=urllib.request.urlopen(self._API_endpoint)
             res=req.read()
-            contents = json.loads(res.decode("utf-8"))
-            print(str(contents))
-            self._Status=contents["light"]["state"]
-            self._LedCount=contents["light"]["led-count"]
-            self._BrightnessValue=contents["light"]["brightness"]
-            self._RedValue=contents["light"]["color"]["red"]
-            self._GreenValue=contents["light"]["color"]["green"]
-            self._BlueValue=contents["light"]["color"]["blue"]
-            self._WhiteValue=contents["light"]["color"]["white"]
+            self._MetaData = json.loads(res.decode("utf-8"))
+            print(str(self._MetaData))
+            self._Status=self._MetaData["light"]["state"]
+            self._LedCount=self._MetaData["light"]["led-count"]
+            self._BrightnessValue=self._MetaData["light"]["brightness"]
+            self._RedValue=self._MetaData["light"]["color"]["red"]
+            self._GreenValue=self._MetaData["light"]["color"]["green"]
+            self._BlueValue=self._MetaData["light"]["color"]["blue"]
+            self._WhiteValue=self._MetaData["light"]["color"]["white"]
         except Exception as e:
             print(str(e))
 
@@ -136,11 +142,16 @@ class LedStrip():
 
 
 class LedstripsGUI(UserControl):
+    def setPage(self, page: flet.Page):
+        # Reference to the app's page:
+        self._page = page
+
     def setLedstrip(self, ledstrip: LedStrip):
         self._ledstrip=ledstrip
 
     def build(self):
-        ledstripContainer = LedstripContainer(self._ledstrip)
+        ledstripContainer = LedstripContainer(ledstrip=self._ledstrip,
+                                              page=self._page)
         return ledstripContainer
 
 
@@ -148,8 +159,9 @@ class LedstripsGUI(UserControl):
 
 
 class LedstripContainer(Container):
-    def __init__(self, ledstrip: LedStrip):
+    def __init__(self, ledstrip: LedStrip = None, page: flet.Page = None):
         self._ledstrip = ledstrip
+        self._page = page
         self.result = Text(value=self._ledstrip.getColorHEX(), color=colors.WHITE, size=20)
         super().__init__(
             width=400,
@@ -160,6 +172,24 @@ class LedstripContainer(Container):
                 controls=[
                     Row(controls=[self.result], alignment="end"),
                     Row(controls=[self.ColorPickerWidget()],),
+                    Row(controls=[flet.Markdown(value=f"```json\n{json.dumps(self._ledstrip._MetaData, indent=2)}\n```\nhttp://google.com",
+                                                extension_set=flet.MarkdownExtensionSet.GITHUB_WEB,
+                                                selectable=True,
+                                                # Find a list of themes here:
+                                                #   https://flet.dev/docs/controls/markdown
+                                                code_theme="androidstudio",
+                                                code_style=flet.TextStyle(font_family="Roboto Mono",
+                                                                          size=12),
+#                                                auto_follow_links=True,
+#                                                auto_follow_links_target="_blank",
+                                                on_tap_link=lambda e: self._page.launch_url(url=e.data)
+                                                )])
+#                    Row(controls=[flet.TextField(label="Ledstrip info:",
+#                                                 read_only=True,
+#                                                 multiline=True,
+#                                                 text_style=flet.TextStyle(font_family="Monospace",
+#                                                                           size=9),
+#                                                 value=json.dumps(self._ledstrip._MetaData, indent=2))])
                 ],
             )
         )
@@ -188,4 +218,5 @@ if __name__ == '__main__':
     app = App()
     app.addStrip()
     app.list()
-    flet.app(target=app.GUI)
+    flet.app(target=app.GUI,
+             assets_dir="assets")

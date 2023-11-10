@@ -1,7 +1,7 @@
 {
     "name": "ledstrips",
     "short_name": "ledstrips",
-    "description": "A minimal Flet app",
+    "description": "Controlling ledstrips",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",

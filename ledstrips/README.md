@@ -21,3 +21,16 @@
     cd ledstrips
     flet run
 ```
+
+## Run the app on your Android device:
+```
+/> cd ledstrips
+/> flet run --android
+```
+The app will be run in a web server in the background and a QR code will appear.  
+Scan the QR code on your device and navigate to the app's web page.  
+
+Note that code changes will get deployed while this is running, so you can "hot"
+see and test your code changes!  
+
+see: https://flet.dev/docs/guides/python/testing-on-android/  
